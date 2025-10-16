@@ -21,10 +21,22 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class securityconfig {
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((requests) -> requests.anyRequest().authenticated());
-      //   http.formLogin(withDefaults());
+        http.authorizeHttpRequests((requests) -> requests
+                .requestMatchers("/h2-console/**").permitAll()
+                .anyRequest().authenticated());
+
+        // Disable CSRF for H2 Console
+        http.csrf(csrf -> csrf
+                .ignoringRequestMatchers("/h2-console/**"));
+
+        // Allow frames from same origin for H2 Console
+        http.headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin()));
+
+        //   http.formLogin(withDefaults());
         http.sessionManagement(Session -> Session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-          http.httpBasic(withDefaults());
+        http.httpBasic(withDefaults());
+
         return http.build();
     }
 
@@ -37,9 +49,9 @@ public class securityconfig {
 
         UserDetails admin= User.withUsername("admin")
                 .password("{noop}admin123")
-                .roles("USER")
+                .roles("ADMIN")
                 .build();
 
-        return new InMemoryUserDetailsManager(user1 , admin);
+        return new InMemoryUserDetailsManager(user1, admin);
     }
 }
